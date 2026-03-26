@@ -1,0 +1,24 @@
+project:
+  name: "wildfire-forecasting-mlops"
+  region: "California-High-Risk"
+
+artifacts:
+  raw_data_path: "data/raw/historical_weather.csv"
+  processed_data_path: "data/processed/clean_features.csv"
+  model_dir: "models/"
+  test_data_path: "data/processed/test_set.csv"
+
+training:
+  test_size: 0.2
+  random_state: 42
+  target_column: "fire_occurrence"
+  experiment_name: "Wildfire_Risk_Classification"
+
+model_params:
+  n_estimators: 150
+  max_depth: 10
+  min_samples_split: 5
+
+monitoring:
+  drift_threshold: 0.05 
+  api_port: 8000
