@@ -1,25 +1,27 @@
-# Wildfire Risk Forecasting System (MLOps)
+# WildfireOps
+
+![WildfireOps Logo](docs/assets/wildfireops-logo.png)
 
 ## Predicting wildfire risk through a reproducible, testable, and production-oriented ML pipeline.
 
 ## Project Overview
 
-Wildfires are one of the most serious environmental and public-safety threats, affecting ecosystems, infrastructure, and human life. This project is an end-to-end MLOps system designed to forecast wildfire risk using historical satellite fire detections and weather data.
+Wildfires are one of the most serious environmental and public-safety threats, affecting ecosystems, infrastructure, and human life. **WildfireOps** is an end-to-end MLOps project designed to forecast wildfire risk using historical satellite fire detections and weather data.
 
-Instead of treating machine learning as a notebook-only experiment, this repository is being built as a production-oriented pipeline: from raw data ingestion and validation, to feature engineering, model training, testing, and governance through CI/CD and security checks.
+Rather than treating machine learning as a notebook-only experiment, this repository is being developed as a production-oriented system: from raw data ingestion and validation, to dataset construction, weather enrichment, feature engineering, model training, testing, and governance through CI/CD and security checks.
 
 The current implementation focuses on building a reliable baseline system using:
 
 - **NASA FIRMS** wildfire detections for positive fire-event data
 - **Open-Meteo Historical API** for weather enrichment
 - synthetic **negative sampling** for supervised binary classification
-- a reproducible Python pipeline for training baseline models
+- a reproducible Python pipeline for baseline model training
 
 ---
 
 ## Current Project Status
 
-The project currently includes a working Phase 1 baseline pipeline:
+The project currently includes a working Phase 1 baseline pipeline with:
 
 - ingestion and merge of wildfire event data from **NASA FIRMS**
 - validation of raw fire-event records
@@ -30,7 +32,7 @@ The project currently includes a working Phase 1 baseline pipeline:
 - disk-based caching for weather API lookups
 - feature engineering
 - baseline model training with **Logistic Regression**
-- automated tests for core components
+- automated tests for core pipeline components
 - repository governance with **GitHub Actions**, **CodeQL**, and dependency review
 
 This means the repository is no longer only a scaffold: it already contains a functioning wildfire risk training workflow.
@@ -116,6 +118,23 @@ The project follows a structured Git workflow:
 
 All changes are developed in feature branches, merged into `development`, and then promoted to `main` through pull requests with automated checks.
 
+### Branch Protection Strategy
+
+#### `development`
+- pull request required before merge
+- CI must pass before merge
+- no approval required
+
+#### `main`
+- pull request required before merge
+- CI, CodeQL, and dependency review must pass
+- branch must be up to date before merge
+- no approval required
+
+This creates a two-stage delivery flow:
+
+`feature/*` → `development` → `main`
+
 ---
 
 ## Roadmap
@@ -139,7 +158,7 @@ Planned next:
   - Random Forest
   - XGBoost
 - add experiment tracking with **MLflow**
-- compare model performance and choose the final baseline model
+- compare model performance and select the final baseline model
 
 ### Phase 3 — Data Versioning & Reproducibility
 Planned:
@@ -167,7 +186,7 @@ This project is designed not only to predict wildfire risk, but also to demonstr
 - testably
 - with operational discipline
 
-The long-term goal is to provide a system that could support emergency planning, environmental monitoring, and resource allocation with a workflow that is auditable rather than opaque.
+The long-term goal is to support emergency planning, environmental monitoring, and resource allocation with a workflow that is auditable rather than opaque.
 
 ---
 
