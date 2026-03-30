@@ -30,3 +30,23 @@ weather:
   max_rows: 5000
   max_unique_requests: 1500
   chunk_size: 250
+
+benchmark:
+  models:
+    logistic_regression:
+      enabled: true
+      max_iter: 1000
+
+    random_forest:
+      enabled: true
+      n_estimators: 200
+      max_depth: 12
+
+    xgboost:
+      enabled: true
+      n_estimators: 200
+      max_depth: 6
+      learning_rate: 0.1
+      subsample: 0.8
+      colsample_bytree: 0.8
+      eval_metric: logloss

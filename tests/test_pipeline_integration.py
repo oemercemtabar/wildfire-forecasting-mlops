@@ -61,7 +61,7 @@ def test_pipeline_integration_runs_end_to_end(
     assert not X_train.empty
     assert not X_test.empty
 
-    model, metrics = train_model(
+    model, benchmark_payload = train_model(
         X_train,
         X_test,
         y_train,
@@ -71,6 +71,12 @@ def test_pipeline_integration_runs_end_to_end(
     )
 
     assert model is not None
-    assert "accuracy" in metrics
-    assert "f1" in metrics
-    assert "roc_auc" in metrics
+    assert "best_model_name" in benchmark_payload
+    assert "models" in benchmark_payload
+
+    best_model_name = benchmark_payload["best_model_name"]
+    best_metrics = benchmark_payload["models"][best_model_name]
+
+    assert "accuracy" in best_metrics
+    assert "f1" in best_metrics
+    assert "roc_auc" in best_metrics
