@@ -50,3 +50,7 @@ benchmark:
       subsample: 0.8
       colsample_bytree: 0.8
       eval_metric: logloss
+
+mlflow:
+  experiment_name: wildfireops-benchmarking
+  log_model: true

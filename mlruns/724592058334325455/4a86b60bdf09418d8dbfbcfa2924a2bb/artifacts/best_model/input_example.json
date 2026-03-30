@@ -1,0 +1,1 @@
+{"columns": ["latitude", "longitude", "temperature_2m_mean", "relative_humidity_2m_mean", "precipitation_sum", "wind_speed_10m_max", "month", "day_of_year"], "data": [[41.9, 12.5, 12.5, 70, 0.0, 11.2, 1, 1], [41.05, 14.93, 12.5, 70, 0.0, 11.2, 1, 2]]}
