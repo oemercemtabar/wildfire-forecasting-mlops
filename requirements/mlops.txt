@@ -4,5 +4,5 @@ dvc==3.42.0
 dvc-s3==3.0.1
 # mlflow==2.10.2
 dagshub==0.3.2
-evidently==0.4.16
+evidently==0.7.21
 prometheus-client==0.24.1
