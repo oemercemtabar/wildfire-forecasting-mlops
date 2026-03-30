@@ -84,6 +84,7 @@ def test_config(tmp_path: Path):
             "model_path": str(artifacts_dir / "model.joblib"),
             "metrics_path": str(artifacts_dir / "metrics.json"),
             "benchmark_metrics_path": str(artifacts_dir / "benchmark_metrics.json"),
+            "feature_importance_path": str(artifacts_dir / "feature_importance.json"),
             "X_train_path": str(artifacts_dir / "X_train.csv"),
             "X_test_path": str(artifacts_dir / "X_test.csv"),
             "y_train_path": str(artifacts_dir / "y_train.csv"),
