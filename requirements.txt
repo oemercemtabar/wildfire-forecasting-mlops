@@ -1,0 +1,4 @@
+-r requirements/base.txt
+-r requirements/dev.txt
+-r requirements/mlops.txt
+-r requirements/api.txt

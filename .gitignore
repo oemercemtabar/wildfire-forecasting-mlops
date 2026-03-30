@@ -138,14 +138,16 @@ celerybeat.pid
 .env
 .envrc
 .venv
-.wildfire-venv
-wildfire-venv/
+.wildfire-env
+wildfire-env/
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
 
+# data
+data/artifacts/weather_cache/
 # Spyder project settings
 .spyderproject
 .spyproject

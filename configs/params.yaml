@@ -1,0 +1,31 @@
+split:
+  test_size: 0.2
+  random_state: 42
+
+model:
+  name: logistic_regression
+  max_iter: 1000
+
+validation:
+  max_missing_ratio: 0.2
+
+negative_sampling:
+  multiplier: 1.0
+  min_latitude: 36.0
+  max_latitude: 47.5
+  min_longitude: 6.0
+  max_longitude: 18.8
+  rounding_decimals: 2
+
+weather:
+  provider: open_meteo
+  timezone: GMT
+  daily_variables:
+    - temperature_2m_mean
+    - relative_humidity_2m_mean
+    - precipitation_sum
+    - wind_speed_10m_max
+  coordinate_rounding_decimals: 2
+  request_timeout_seconds: 30
+  max_rows: 5000
+  max_unique_requests: 1500
