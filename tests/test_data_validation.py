@@ -1,3 +1,7 @@
+
+import pandas as pd
+import pytest
+
 from src.components.data_validation import validate_data
 
 
@@ -9,10 +13,6 @@ def test_validate_data_passes_with_valid_dataframe(sample_fire_events_df, test_c
     assert report["duplicate_rows"] == 0
     assert report["range_issues"] == {}
 
-import pandas as pd
-import pytest
-
-from src.components.data_validation import validate_data
 
 
 def test_validate_data_raises_for_missing_required_columns(test_config, test_params):

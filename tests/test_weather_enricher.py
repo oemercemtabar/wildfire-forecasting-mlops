@@ -1,5 +1,3 @@
-import pandas as pd
-
 from src.components.weather_enricher import enrich_with_weather
 
 
