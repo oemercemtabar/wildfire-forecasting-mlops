@@ -21,7 +21,7 @@ def run_training_pipeline():
     df = ingest_data(config)
     validated_df, validation_report = validate_data(df, config, params)
     positive_df = build_positive_fire_base(validated_df, config)
-    negative_df = sample_negative_examples(positive_df, config, params)
+    _ = sample_negative_examples(positive_df, config, params)
     training_df = build_training_dataset(config)
     enriched_df = enrich_with_weather(config, params)
     X_train, X_test, y_train, y_test = build_features(config, params)

@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 
 from src.utils.paths import LOGS_DIR
 
