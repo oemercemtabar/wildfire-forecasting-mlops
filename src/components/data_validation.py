@@ -36,12 +36,16 @@ def _validate_ranges(df: pd.DataFrame) -> dict[str, Any]:
     issues: dict[str, Any] = {}
 
     if "latitude" in df.columns:
-        invalid_lat = int(((df["latitude"] < -90) | (df["latitude"] > 90)).fillna(False).sum())
+        invalid_lat = int(
+            ((df["latitude"] < -90) | (df["latitude"] > 90)).fillna(False).sum()
+        )
         if invalid_lat > 0:
             issues["latitude_out_of_range"] = invalid_lat
 
     if "longitude" in df.columns:
-        invalid_lon = int(((df["longitude"] < -180) | (df["longitude"] > 180)).fillna(False).sum())
+        invalid_lon = int(
+            ((df["longitude"] < -180) | (df["longitude"] > 180)).fillna(False).sum()
+        )
         if invalid_lon > 0:
             issues["longitude_out_of_range"] = invalid_lon
 
@@ -53,7 +57,9 @@ def _validate_ranges(df: pd.DataFrame) -> dict[str, Any]:
     return issues
 
 
-def validate_data(df: pd.DataFrame, config: dict, params: dict) -> tuple[pd.DataFrame, dict[str, Any]]:
+def validate_data(
+    df: pd.DataFrame, config: dict, params: dict
+) -> tuple[pd.DataFrame, dict[str, Any]]:
     validated_path = Path(config["data"]["validated_path"])
     report_path = Path(config["artifacts"]["validation_report_path"])
     max_missing_ratio = params["validation"]["max_missing_ratio"]
@@ -68,9 +74,7 @@ def validate_data(df: pd.DataFrame, config: dict, params: dict) -> tuple[pd.Data
     range_issues = _validate_ranges(df)
 
     high_missing_columns = {
-        col: ratio
-        for col, ratio in missing_ratios.items()
-        if ratio > max_missing_ratio
+        col: ratio for col, ratio in missing_ratios.items() if ratio > max_missing_ratio
     }
 
     duplicate_count = int(df.duplicated().sum())
@@ -89,7 +93,9 @@ def validate_data(df: pd.DataFrame, config: dict, params: dict) -> tuple[pd.Data
         logger.warning("Validation found %s duplicate rows", duplicate_count)
 
     if high_missing_columns:
-        logger.warning("Columns above missing-value threshold: %s", high_missing_columns)
+        logger.warning(
+            "Columns above missing-value threshold: %s", high_missing_columns
+        )
 
     if range_issues:
         logger.warning("Range validation issues found: %s", range_issues)

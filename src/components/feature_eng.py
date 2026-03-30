@@ -38,7 +38,9 @@ def build_features(config: dict, params: dict):
     df["month"] = df["date"].dt.month
     df["day_of_year"] = df["date"].dt.dayofyear
 
-    df = df.dropna(subset=required_columns + ["month", "day_of_year"]).reset_index(drop=True)
+    df = df.dropna(subset=required_columns + ["month", "day_of_year"]).reset_index(
+        drop=True
+    )
 
     feature_columns = [
         "latitude",

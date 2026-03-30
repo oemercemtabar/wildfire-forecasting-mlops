@@ -2,6 +2,7 @@ import logging
 
 from src.utils.paths import LOGS_DIR
 
+
 def get_logger(name: str) -> logging.Logger:
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -9,7 +10,7 @@ def get_logger(name: str) -> logging.Logger:
 
     if logger.handlers:
         return logger
-    
+
     logger.setLevel(logging.INFO)
 
     formatter = logging.Formatter("%(asctime)s | %(levelname)s |%(name)s | %(message)s")

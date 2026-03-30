@@ -50,9 +50,11 @@ def build_training_dataset(config: dict) -> pd.DataFrame:
         subset=["date", "latitude", "longitude", "fire_occurred"]
     )
 
-    training_df = training_df.drop_duplicates().sort_values(
-        ["date", "latitude", "longitude"]
-    ).reset_index(drop=True)
+    training_df = (
+        training_df.drop_duplicates()
+        .sort_values(["date", "latitude", "longitude"])
+        .reset_index(drop=True)
+    )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     training_df.to_csv(output_path, index=False)

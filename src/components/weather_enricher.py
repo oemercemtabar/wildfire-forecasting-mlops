@@ -14,7 +14,9 @@ def _build_weather_key(date: str, latitude: float, longitude: float) -> str:
     return f"{date}_{latitude:.2f}_{longitude:.2f}"
 
 
-def _cache_file_path(cache_dir: Path, date: str, latitude: float, longitude: float) -> Path:
+def _cache_file_path(
+    cache_dir: Path, date: str, latitude: float, longitude: float
+) -> Path:
     key = _build_weather_key(date, latitude, longitude)
     return cache_dir / f"{key}.json"
 
@@ -113,7 +115,8 @@ def enrich_with_weather(config: dict, params: dict) -> pd.DataFrame:
                 row["date_str"],
                 row["latitude_rounded"],
                 row["longitude_rounded"],
-            ) in allowed_keys,
+            )
+            in allowed_keys,
             axis=1,
         )
     ].copy()

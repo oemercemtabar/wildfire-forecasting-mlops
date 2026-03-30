@@ -27,22 +27,13 @@ def _build_acquisition_timestamp(df: pd.DataFrame) -> pd.DataFrame:
     df["acq_date"] = pd.to_datetime(df["acq_date"], errors="coerce")
 
     acq_time_str = (
-        df["acq_time"]
-        .astype(str)
-        .str.replace(r"\.0$", "", regex=True)
-        .str.zfill(4)
+        df["acq_time"].astype(str).str.replace(r"\.0$", "", regex=True).str.zfill(4)
     )
 
     hours = acq_time_str.str[:2]
     minutes = acq_time_str.str[2:4]
 
-    timestamp_str = (
-        df["acq_date"].dt.strftime("%Y-%m-%d")
-        + " "
-        + hours
-        + ":"
-        + minutes
-    )
+    timestamp_str = df["acq_date"].dt.strftime("%Y-%m-%d") + " " + hours + ":" + minutes
 
     df["acq_timestamp"] = pd.to_datetime(timestamp_str, errors="coerce")
 

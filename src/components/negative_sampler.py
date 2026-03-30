@@ -8,7 +8,9 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-def sample_negative_examples(positive_df: pd.DataFrame, config: dict, params: dict) -> pd.DataFrame:
+def sample_negative_examples(
+    positive_df: pd.DataFrame, config: dict, params: dict
+) -> pd.DataFrame:
     output_path = Path(config["data"]["negative_samples_path"])
     sampling_cfg = params["negative_sampling"]
 
@@ -33,11 +35,15 @@ def sample_negative_examples(positive_df: pd.DataFrame, config: dict, params: di
 
     logger.info("Generating %s negative samples", sample_size)
 
-    sampled_dates = positive_df["date"].sample(
-        n=sample_size,
-        replace=True,
-        random_state=random_state,
-    ).reset_index(drop=True)
+    sampled_dates = (
+        positive_df["date"]
+        .sample(
+            n=sample_size,
+            replace=True,
+            random_state=random_state,
+        )
+        .reset_index(drop=True)
+    )
 
     min_lat = float(sampling_cfg["min_latitude"])
     max_lat = float(sampling_cfg["max_latitude"])
@@ -65,20 +71,26 @@ def sample_negative_examples(positive_df: pd.DataFrame, config: dict, params: di
         )
     )
 
-    negative_df["_date_key"] = pd.to_datetime(negative_df["date"]).dt.strftime("%Y-%m-%d")
+    negative_df["_date_key"] = pd.to_datetime(negative_df["date"]).dt.strftime(
+        "%Y-%m-%d"
+    )
     negative_df["_lat_key"] = negative_df["latitude"].round(rounding_decimals)
     negative_df["_lon_key"] = negative_df["longitude"].round(rounding_decimals)
 
     before_filter = len(negative_df)
     negative_df = negative_df[
         ~negative_df.apply(
-            lambda row: (row["_date_key"], row["_lat_key"], row["_lon_key"]) in positive_keys,
+            lambda row: (row["_date_key"], row["_lat_key"], row["_lon_key"])
+            in positive_keys,
             axis=1,
         )
     ].copy()
     after_filter = len(negative_df)
 
-    logger.info("Removed %s negative samples overlapping with positive keys", before_filter - after_filter)
+    logger.info(
+        "Removed %s negative samples overlapping with positive keys",
+        before_filter - after_filter,
+    )
 
     negative_df = negative_df.drop(columns=["_date_key", "_lat_key", "_lon_key"])
     negative_df = negative_df.drop_duplicates().reset_index(drop=True)

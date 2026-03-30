@@ -12,4 +12,3 @@ ARTIFACTS_DIR = DATA_DIR / "artifacts"
 CONFGIS_DIR = ROOT_DIR / "configs"
 LOGS_DIR = ROOT_DIR / "logs"
 SRC_DIR = ROOT_DIR / "src"
-

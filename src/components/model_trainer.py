@@ -28,7 +28,9 @@ def train_model(X_train, X_test, y_train, y_test, config: dict, params: dict):
 
     logger.info("Training model: %s", model_name)
 
-    model = LogisticRegression(max_iter=max_iter, random_state=params["split"]["random_state"])
+    model = LogisticRegression(
+        max_iter=max_iter, random_state=params["split"]["random_state"]
+    )
     model.fit(X_train, y_train)
 
     y_pred = model.predict(X_test)
@@ -41,7 +43,9 @@ def train_model(X_train, X_test, y_train, y_test, config: dict, params: dict):
         "recall": float(recall_score(y_test, y_pred, zero_division=0)),
         "f1": float(f1_score(y_test, y_pred, zero_division=0)),
         "roc_auc": float(roc_auc_score(y_test, y_proba)),
-        "classification_report": classification_report(y_test, y_pred, output_dict=True),
+        "classification_report": classification_report(
+            y_test, y_pred, output_dict=True
+        ),
     }
 
     model_path = Path(config["artifacts"]["model_path"])
