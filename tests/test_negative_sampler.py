@@ -1,15 +1,26 @@
 from src.components.negative_sampler import sample_negative_examples
 
 
-def test_negative_sampler_creates_zero_class_rows(sample_positive_base_df, test_config, test_params):
-    negative_df = sample_negative_examples(sample_positive_base_df, test_config, test_params)
+def test_negative_sampler_creates_zero_class_rows(
+    sample_positive_base_df, test_config, test_params
+):
+    negative_df = sample_negative_examples(
+        sample_positive_base_df, test_config, test_params
+    )
 
     assert not negative_df.empty
     assert negative_df["fire_occurred"].eq(0).all()
-    assert {"date", "latitude", "longitude", "fire_occurred"}.issubset(negative_df.columns)
+    assert {"date", "latitude", "longitude", "fire_occurred"}.issubset(
+        negative_df.columns
+    )
 
-def test_negative_sampler_avoids_positive_overlap(sample_positive_base_df, test_config, test_params):
-    negative_df = sample_negative_examples(sample_positive_base_df, test_config, test_params)
+
+def test_negative_sampler_avoids_positive_overlap(
+    sample_positive_base_df, test_config, test_params
+):
+    negative_df = sample_negative_examples(
+        sample_positive_base_df, test_config, test_params
+    )
 
     positive_keys = set(
         zip(
