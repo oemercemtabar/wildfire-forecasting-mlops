@@ -162,10 +162,8 @@ def enrich_with_weather(config: dict, params: dict) -> pd.DataFrame:
                     api_calls += 1
                 except Exception as exc:
                     logger.warning(
-                        "Weather request failed for date=%s lat=%s lon=%s: %s",
-                        date_str,
-                        latitude,
-                        longitude,
+                        "Weather request failed for cache_key=%s: %s",
+                        cache_key,
                         exc,
                     )
                     parsed_weather = {variable: None for variable in daily_variables}
