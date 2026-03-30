@@ -1,24 +1,49 @@
 project:
   name: "wildfire-forecasting-mlops"
-  region: "California-High-Risk"
+  region: "Italy-High-Risk-Areas"
+
+data:
+  raw_paths:
+    - data/raw/italy_viirs_snpp_2023.csv
+    - data/raw/italy_viirs_snpp_2024.csv
+  interim_path: data/interim/fire_events_italy_viirs_snpp_2023_2024.csv
+  validated_path: data/processed/validated.csv
+  positive_base_path: data/processed/positive_fire_base.csv
+  negative_samples_path: data/processed/negative_samples.csv
+  training_dataset_path: data/processed/training_dataset.csv
+  weather_enriched_path: data/processed/training_dataset_weather_enriched.csv
 
 artifacts:
-  raw_data_path: "data/raw/historical_weather.csv"
-  processed_data_path: "data/processed/clean_features.csv"
-  model_dir: "models/"
-  test_data_path: "data/processed/test_set.csv"
+  preprocessor_path: data/artifacts/preprocessor.joblib
+  model_path: data/artifacts/model.joblib
+  metrics_path: data/artifacts/metrics.json
+  validation_report_path: data/artifacts/validation_report.json
+  weather_cache_dir: data/artifacts/weather_cache
+  X_train_path: data/artifacts/X_train.csv
+  X_test_path: data/artifacts/X_test.csv
+  y_train_path: data/artifacts/y_train.csv
+  y_test_path: data/artifacts/y_test.csv
+  weather_cache_dir: data/artifacts/weather_cache
 
-training:
-  test_size: 0.2
-  random_state: 42
-  target_column: "fire_occurrence"
-  experiment_name: "Wildfire_Risk_Classification"
+target:
+  column: fire_occurred
 
-model_params:
-  n_estimators: 150
-  max_depth: 10
-  min_samples_split: 5
-
-monitoring:
-  drift_threshold: 0.05 
-  api_port: 8000
+features:
+  numeric:
+    - latitude
+    - longitude
+    - bright_ti4
+    - bright_ti5
+    - frp
+    - scan
+    - track
+  categorical:
+    - satellite
+    - instrument
+    - confidence
+    - daynight
+    - type
+    - version
+  datetime:
+    - acq_date
+    - acq_time

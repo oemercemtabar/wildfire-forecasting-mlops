@@ -1,0 +1,27 @@
+{
+  "row_count": 40639,
+  "column_count": 17,
+  "missing_required_columns": [],
+  "missing_ratios": {
+    "latitude": 0.0,
+    "longitude": 0.0,
+    "bright_ti4": 0.0,
+    "scan": 0.0,
+    "track": 0.0,
+    "acq_date": 0.0,
+    "acq_time": 0.0,
+    "satellite": 0.0,
+    "instrument": 0.0,
+    "confidence": 0.0,
+    "version": 0.0,
+    "bright_ti5": 0.0,
+    "frp": 0.0,
+    "daynight": 0.0,
+    "type": 0.0,
+    "source_file": 0.0,
+    "acq_timestamp": 0.0
+  },
+  "high_missing_columns": {},
+  "duplicate_rows": 0,
+  "range_issues": {}
+}
