@@ -29,3 +29,4 @@ weather:
   request_timeout_seconds: 30
   max_rows: 5000
   max_unique_requests: 1500
+  chunk_size: 250

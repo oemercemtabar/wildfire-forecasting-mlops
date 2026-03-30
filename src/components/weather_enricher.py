@@ -15,7 +15,10 @@ def _build_weather_key(date: str, latitude: float, longitude: float) -> str:
 
 
 def _cache_file_path(
-    cache_dir: Path, date: str, latitude: float, longitude: float
+    cache_dir: Path,
+    date: str,
+    latitude: float,
+    longitude: float,
 ) -> Path:
     key = _build_weather_key(date, latitude, longitude)
     return cache_dir / f"{key}.json"
@@ -50,10 +53,17 @@ def _parse_daily_weather_response(
     return parsed
 
 
+def _iter_chunks(df: pd.DataFrame, chunk_size: int):
+    for start in range(0, len(df), chunk_size):
+        yield start, df.iloc[start : start + chunk_size].copy()
+
+
 def enrich_with_weather(config: dict, params: dict) -> pd.DataFrame:
     training_dataset_path = Path(config["data"]["training_dataset_path"])
     output_path = Path(config["data"]["weather_enriched_path"])
     cache_dir = Path(config["artifacts"]["weather_cache_dir"])
+    summary_path = Path(config["artifacts"]["weather_summary_path"])
+    failed_requests_path = Path(config["artifacts"]["failed_weather_requests_path"])
 
     if not training_dataset_path.exists():
         raise FileNotFoundError(f"Training dataset not found: {training_dataset_path}")
@@ -65,6 +75,7 @@ def enrich_with_weather(config: dict, params: dict) -> pd.DataFrame:
     timeout = int(weather_cfg.get("request_timeout_seconds", 30))
     max_rows = weather_cfg.get("max_rows")
     max_unique_requests = weather_cfg.get("max_unique_requests")
+    chunk_size = int(weather_cfg.get("chunk_size", 250))
 
     logger.info("Loading training dataset from %s", training_dataset_path)
     df = pd.read_csv(training_dataset_path)
@@ -78,9 +89,11 @@ def enrich_with_weather(config: dict, params: dict) -> pd.DataFrame:
     df["date"] = pd.to_datetime(df["date"], errors="coerce")
     df = df.dropna(subset=["date", "latitude", "longitude"]).reset_index(drop=True)
 
+    original_row_count = len(df)
+
     if max_rows is not None:
         df = df.head(int(max_rows)).copy()
-        logger.info("Using only first %s rows for enrichment test", len(df))
+        logger.info("Using only first %s rows for enrichment", len(df))
 
     df["latitude_rounded"] = df["latitude"].round(rounding_decimals)
     df["longitude_rounded"] = df["longitude"].round(rounding_decimals)
@@ -91,6 +104,8 @@ def enrich_with_weather(config: dict, params: dict) -> pd.DataFrame:
         .drop_duplicates()
         .reset_index(drop=True)
     )
+
+    total_unique_before_limit = len(unique_requests)
 
     if max_unique_requests is not None:
         unique_requests = unique_requests.head(int(max_unique_requests)).copy()
@@ -121,72 +136,88 @@ def enrich_with_weather(config: dict, params: dict) -> pd.DataFrame:
         )
     ].copy()
 
+    filtered_row_count = len(df)
+
     client = OpenMeteoHistoricalClient(timeout=timeout)
     weather_cache: dict[str, dict[str, Any]] = {}
     weather_rows: list[dict[str, Any]] = []
+    failed_requests: list[dict[str, Any]] = []
 
     cache_hits_memory = 0
     cache_hits_disk = 0
     api_calls = 0
+    api_failures = 0
 
-    for idx, row in unique_requests.iterrows():
-        date_str = row["date_str"]
-        latitude = float(row["latitude_rounded"])
-        longitude = float(row["longitude_rounded"])
-
-        cache_key = _build_weather_key(date_str, latitude, longitude)
-        cache_file = _cache_file_path(cache_dir, date_str, latitude, longitude)
-
-        if cache_key in weather_cache:
-            parsed_weather = weather_cache[cache_key]
-            cache_hits_memory += 1
-        else:
-            cached_weather = _load_cached_weather(cache_file)
-
-            if cached_weather is not None:
-                parsed_weather = cached_weather
-                weather_cache[cache_key] = parsed_weather
-                cache_hits_disk += 1
-            else:
-                try:
-                    response = client.fetch_daily_weather(
-                        latitude=latitude,
-                        longitude=longitude,
-                        date=date_str,
-                        daily_variables=daily_variables,
-                        timezone=timezone,
-                    )
-                    parsed_weather = _parse_daily_weather_response(
-                        response=response,
-                        daily_variables=daily_variables,
-                    )
-                    weather_cache[cache_key] = parsed_weather
-                    _save_cached_weather(cache_file, parsed_weather)
-                    api_calls += 1
-                except Exception as exc:
-                    logger.warning(
-                        "Weather request failed for one weather lookup on date=%s: %s",
-                        date_str,
-                        exc,
-                    )
-                    parsed_weather = {variable: None for variable in daily_variables}
-                    weather_cache[cache_key] = parsed_weather
-                    _save_cached_weather(cache_file, parsed_weather)
-
-        weather_rows.append(
-            {
-                "date_str": date_str,
-                "latitude_rounded": latitude,
-                "longitude_rounded": longitude,
-                **parsed_weather,
-            }
+    for chunk_start, chunk_df in _iter_chunks(unique_requests, chunk_size):
+        logger.info(
+            "Processing weather chunk %s-%s of %s",
+            chunk_start + 1,
+            min(chunk_start + len(chunk_df), len(unique_requests)),
+            len(unique_requests),
         )
 
-        if (idx + 1) % 100 == 0:
-            logger.info(
-                "Processed %s / %s weather requests",
-                idx + 1,
-                len(unique_requests),
+        for _, row in chunk_df.iterrows():
+            date_str = row["date_str"]
+            latitude = float(row["latitude_rounded"])
+            longitude = float(row["longitude_rounded"])
+
+            cache_key = _build_weather_key(date_str, latitude, longitude)
+            cache_file = _cache_file_path(cache_dir, date_str, latitude, longitude)
+
+            if cache_key in weather_cache:
+                parsed_weather = weather_cache[cache_key]
+                cache_hits_memory += 1
+            else:
+                cached_weather = _load_cached_weather(cache_file)
+
+                if cached_weather is not None:
+                    parsed_weather = cached_weather
+                    weather_cache[cache_key] = parsed_weather
+                    cache_hits_disk += 1
+                else:
+                    try:
+                        response = client.fetch_daily_weather(
+                            latitude=latitude,
+                            longitude=longitude,
+                            date=date_str,
+                            daily_variables=daily_variables,
+                            timezone=timezone,
+                        )
+                        parsed_weather = _parse_daily_weather_response(
+                            response=response,
+                            daily_variables=daily_variables,
+                        )
+                        weather_cache[cache_key] = parsed_weather
+                        _save_cached_weather(cache_file, parsed_weather)
+                        api_calls += 1
+                    except Exception as exc:
+                        logger.warning(
+                            "Weather request failed for one lookup on date=%s: %s",
+                            date_str,
+                            exc,
+                        )
+                        parsed_weather = {
+                            variable: None for variable in daily_variables
+                        }
+                        weather_cache[cache_key] = parsed_weather
+                        _save_cached_weather(cache_file, parsed_weather)
+                        api_failures += 1
+                        failed_requests.append(
+                            {
+                                "date": date_str,
+                                "latitude": latitude,
+                                "longitude": longitude,
+                                "error": str(exc),
+                            }
+                        )
+
+            weather_rows.append(
+                {
+                    "date_str": date_str,
+                    "latitude_rounded": latitude,
+                    "longitude_rounded": longitude,
+                    **parsed_weather,
+                }
             )
 
     weather_df = pd.DataFrame(weather_rows)
@@ -204,13 +235,39 @@ def enrich_with_weather(config: dict, params: dict) -> pd.DataFrame:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     enriched_df.to_csv(output_path, index=False)
 
+    failed_requests_path.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(failed_requests).to_csv(failed_requests_path, index=False)
+
+    summary = {
+        "original_row_count": int(original_row_count),
+        "filtered_row_count": int(filtered_row_count),
+        "total_unique_requests_before_limit": int(total_unique_before_limit),
+        "processed_unique_requests": int(len(unique_requests)),
+        "chunk_size": int(chunk_size),
+        "cache_hits_memory": int(cache_hits_memory),
+        "cache_hits_disk": int(cache_hits_disk),
+        "api_calls": int(api_calls),
+        "api_failures": int(api_failures),
+        "failed_request_count": int(len(failed_requests)),
+        "enriched_row_count": int(len(enriched_df)),
+        "output_path": str(output_path),
+        "failed_requests_path": str(failed_requests_path),
+    }
+
+    summary_path.parent.mkdir(parents=True, exist_ok=True)
+    with summary_path.open("w", encoding="utf-8") as file:
+        json.dump(summary, file, indent=2, ensure_ascii=False)
+
     logger.info("Weather-enriched dataset saved to %s", output_path)
     logger.info("Weather-enriched dataset shape: %s", enriched_df.shape)
     logger.info(
-        "Weather cache stats | memory_hits=%s disk_hits=%s api_calls=%s",
+        "Weather summary | memory_hits=%s disk_hits=%s api_calls=%s api_failures=%s",
         cache_hits_memory,
         cache_hits_disk,
         api_calls,
+        api_failures,
     )
+    logger.info("Weather summary artifact saved to %s", summary_path)
+    logger.info("Failed weather requests saved to %s", failed_requests_path)
 
     return enriched_df
