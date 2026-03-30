@@ -1,39 +1,189 @@
 # Wildfire Risk Forecasting System (MLOps)
-## Predicting environmental crises through reproducible, automated machine learning.
+
+## Predicting wildfire risk through a reproducible, testable, and production-oriented ML pipeline.
 
 ## Project Overview
-Wildfires represent one of the most significant threats to global ecosystems and human safety. This project implements an end-to-end MLOps Pipeline to forecast wildfire risks based on real-time meteorological data (temperature, humidity, wind speed) and historical satellite imagery.
 
-Unlike a static notebook, this repository functions as a production-ready "Early Warning Factory." It automates the entire lifecycle—from data ingestion and validation to model deployment and "Climate Drift" monitoring.
+Wildfires are one of the most serious environmental and public-safety threats, affecting ecosystems, infrastructure, and human life. This project is an end-to-end MLOps system designed to forecast wildfire risk using historical satellite fire detections and weather data.
 
----
+Instead of treating machine learning as a notebook-only experiment, this repository is being built as a production-oriented pipeline: from raw data ingestion and validation, to feature engineering, model training, testing, and governance through CI/CD and security checks.
 
-## The 4-Phase MLOps Architecture
+The current implementation focuses on building a reliable baseline system using:
 
-### 1.Data Engineering & Lineage (Phase 1)
-- Data Sources: Integration with NASA FIRMS (satellite fire data) and OpenWeather API.
-- Versioning: Managed via DVC (Data Version Control) to ensure that every model experiment is tied to the exact dataset version used, preventing "data mystery."
-- Validation: Automated checks for "sensor failure" values (e.g., impossible temperatures) before training begins.
-### 2.Automated Experimentation (Phase 2)
-- Tracking: Every training run is logged using MLflow, capturing hyperparameters, loss curves, and feature importance (e.g., how much "Fuel Moisture" impacted the risk score).
-- Registry: High-performing models are versioned in a central Model Registry, allowing for seamless rollbacks if a new model underperforms.
-### 3.CI/CD & Orchestration (Phase 3)
-- Automation: Using GitHub Actions to run unit tests and model signature validations on every push.
-- Orchestration: The pipeline ensures that data cleaning, feature engineering, and training happen in a strict, reproducible sequence defined in dvc.yaml.
-### 4.Serving & Reliability (Phase 4)
-- Deployment: A high-performance FastAPI wrapper containerized with Docker for cloud-agnostic deployment.
-- Monitoring: Integrated with Evidently AI to detect "Climate Drift." If the current environment deviates significantly from the training distribution (e.g., unprecedented heatwaves), the system triggers an alert for manual review or retraining.
-
---- 
-## Tech Stack
-- Language: Python 3.9+
-- ML Frameworks: Scikit-Learn / XGBoost (Risk Classification)
-- Ops Tools: DVC, MLflow, Docker
-- API: FastAPI, Uvicorn
-- CI/CD: GitHub Actions
-- Monitoring: Evidently AI
+- **NASA FIRMS** wildfire detections for positive fire-event data
+- **Open-Meteo Historical API** for weather enrichment
+- synthetic **negative sampling** for supervised binary classification
+- a reproducible Python pipeline for training baseline models
 
 ---
 
-## Impact Goal
-To provide emergency responders and environmental agencies with a reliable, verifiable, and transparent tool for resource allocation, moving away from "black-box" models toward auditable ML systems.
+## Current Project Status
+
+The project currently includes a working Phase 1 baseline pipeline:
+
+- ingestion and merge of wildfire event data from **NASA FIRMS**
+- validation of raw fire-event records
+- positive fire-event dataset construction
+- negative sample generation for binary classification
+- labeled training dataset creation
+- weather enrichment through **Open-Meteo**
+- disk-based caching for weather API lookups
+- feature engineering
+- baseline model training with **Logistic Regression**
+- automated tests for core components
+- repository governance with **GitHub Actions**, **CodeQL**, and dependency review
+
+This means the repository is no longer only a scaffold: it already contains a functioning wildfire risk training workflow.
+
+---
+
+## Implemented Pipeline
+
+### 1. Data Ingestion
+The pipeline ingests historical wildfire detections for Italy from **NASA FIRMS** and combines multi-file yearly datasets into a unified fire-events table.
+
+### 2. Data Validation
+Incoming wildfire records are validated for:
+
+- required columns
+- missing values
+- duplicate rows
+- invalid geographic coordinates
+- invalid numeric ranges
+
+### 3. Dataset Construction
+The project builds a binary classification dataset by:
+
+- treating FIRMS detections as **positive wildfire events**
+- generating **negative non-fire samples**
+- merging both into a labeled training dataset
+
+### 4. Weather Enrichment
+Each training row is enriched with historical weather variables from **Open-Meteo**, including:
+
+- temperature
+- relative humidity
+- precipitation
+- wind speed
+
+A local disk cache is used to avoid repeated API calls for the same date/location combinations.
+
+### 5. Feature Engineering
+The enriched dataset is transformed into model-ready features, including:
+
+- latitude / longitude
+- weather variables
+- temporal features such as month and day-of-year
+
+### 6. Model Training
+The current baseline model is:
+
+- **Logistic Regression**
+
+Evaluation currently includes:
+
+- accuracy
+- precision
+- recall
+- F1 score
+- ROC-AUC
+
+---
+
+## Current Tech Stack
+
+- **Language:** Python 3.11
+- **Data Processing:** pandas, numpy
+- **ML Models:** scikit-learn, XGBoost
+- **Weather Data:** Open-Meteo Historical API
+- **Wildfire Data:** NASA FIRMS
+- **Caching / Artifacts:** local file system, joblib, JSON
+- **Testing:** pytest
+- **Code Quality:** black, ruff
+- **CI/CD:** GitHub Actions
+- **Security:** CodeQL, dependency review
+- **Planned MLOps Extensions:** DVC, MLflow, FastAPI, Evidently
+
+---
+
+## Repository Workflow
+
+The project follows a structured Git workflow:
+
+- `main` → protected production-ready branch
+- `development` → integration branch
+- `feature/<branch-name>` → feature-specific implementation branches
+
+All changes are developed in feature branches, merged into `development`, and then promoted to `main` through pull requests with automated checks.
+
+---
+
+## Roadmap
+
+### Phase 1 — Core ML Pipeline
+Implemented / in progress:
+
+- wildfire ingestion from NASA FIRMS
+- validation layer
+- positive/negative dataset creation
+- weather enrichment
+- feature engineering
+- baseline model training
+- automated tests
+
+### Phase 2 — Model Benchmarking & Experiment Tracking
+Planned next:
+
+- compare baseline models:
+  - Logistic Regression
+  - Random Forest
+  - XGBoost
+- add experiment tracking with **MLflow**
+- compare model performance and choose the final baseline model
+
+### Phase 3 — Data Versioning & Reproducibility
+Planned:
+
+- integrate **DVC**
+- define pipeline stages in `dvc.yaml`
+- version training data and model artifacts
+
+### Phase 4 — Serving & Monitoring
+Planned:
+
+- expose the trained model through **FastAPI**
+- containerize with **Docker**
+- monitor data and prediction drift with **Evidently**
+- evolve toward a production-grade wildfire early warning system
+
+---
+
+## Why This Project Matters
+
+This project is designed not only to predict wildfire risk, but also to demonstrate how environmental ML systems should be built:
+
+- reproducibly
+- transparently
+- testably
+- with operational discipline
+
+The long-term goal is to provide a system that could support emergency planning, environmental monitoring, and resource allocation with a workflow that is auditable rather than opaque.
+
+---
+
+## Next Milestones
+
+The next development priorities are:
+
+1. scale weather enrichment beyond the current sample subset
+2. improve the quality of negative sampling
+3. benchmark additional models such as Random Forest and XGBoost
+4. integrate MLflow for experiment tracking
+5. add DVC for data and pipeline reproducibility
+6. build a FastAPI inference service
+
+---
+
+## Disclaimer
+
+This repository is an engineering and MLOps project focused on wildfire risk modeling and workflow design. It is not intended to replace official emergency forecasting or operational incident response systems.
