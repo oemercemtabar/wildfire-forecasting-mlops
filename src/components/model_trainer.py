@@ -19,6 +19,23 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
+def _extract_feature_importance(model_name, model, feature_names):
+    if not hasattr(model, "feature_importances_"):
+        return None
+
+    importances = model.feature_importances_
+    pairs = [
+        {"feature": feature, "importance": float(importance)}
+        for feature, importance in zip(feature_names, importances)
+    ]
+    pairs = sorted(pairs, key=lambda x: x["importance"], reverse=True)
+
+    return {
+        "model_name": model_name,
+        "feature_importance": pairs,
+    }
+
+
 def _evaluate_model(model_name, model, X_test, y_test):
     y_pred = model.predict(X_test)
     y_proba = model.predict_proba(X_test)[:, 1]
@@ -124,6 +141,19 @@ def train_model(X_train, X_test, y_train, y_test, config: dict, params: dict):
         "selection_metric": "roc_auc",
         "models": benchmark_results,
     }
+
+    feature_names = list(X_train.columns)
+    feature_importance_payload = _extract_feature_importance(
+        best_model_name,
+        best_model,
+        feature_names,
+    )
+
+    feature_importance_path = Path(config["artifacts"]["feature_importance_path"])
+
+    if feature_importance_payload is not None:
+        save_json(feature_importance_payload, feature_importance_path)
+        logger.info("Feature importance saved to %s", feature_importance_path)
 
     joblib.dump(best_model, model_path)
     save_json(best_metrics, metrics_path)
