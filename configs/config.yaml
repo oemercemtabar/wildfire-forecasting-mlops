@@ -27,6 +27,7 @@ artifacts:
   weather_cache_dir: data/artifacts/weather_cache
   weather_summary_path: data/artifacts/weather_enrichment_summary.json
   failed_weather_requests_path: data/artifacts/failed_weather_requests.csv
+  mlflow_tracking_uri: file:./mlruns
 
 target:
   column: fire_occurred

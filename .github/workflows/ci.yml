@@ -28,6 +28,9 @@ jobs:
 
       - name: Install dependencies
         run: |
+          pip install -r requirements/base.txt
+          pip install -r requirements/mlops.txt
+          pip install -r requirements/api.txt
           pip install -r requirements/dev.txt
 
       - name: Lint with ruff
