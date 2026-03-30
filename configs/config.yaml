@@ -17,6 +17,7 @@ artifacts:
   preprocessor_path: data/artifacts/preprocessor.joblib
   model_path: data/artifacts/model.joblib
   metrics_path: data/artifacts/metrics.json
+  benchmark_metrics_path: data/artifacts/benchmark_metrics.json
   validation_report_path: data/artifacts/validation_report.json
   X_train_path: data/artifacts/X_train.csv
   X_test_path: data/artifacts/X_test.csv
@@ -25,7 +26,6 @@ artifacts:
   weather_cache_dir: data/artifacts/weather_cache
   weather_summary_path: data/artifacts/weather_enrichment_summary.json
   failed_weather_requests_path: data/artifacts/failed_weather_requests.csv
-
 target:
   column: fire_occurred
 
