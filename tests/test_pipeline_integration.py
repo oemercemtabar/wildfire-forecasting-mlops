@@ -1,4 +1,3 @@
-
 from src.components.dataset_builder import build_positive_fire_base
 from src.components.feature_eng import build_features
 from src.components.model_trainer import train_model
