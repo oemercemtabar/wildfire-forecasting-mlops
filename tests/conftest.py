@@ -83,6 +83,7 @@ def test_config(tmp_path: Path):
             "validation_report_path": str(artifacts_dir / "validation_report.json"),
             "model_path": str(artifacts_dir / "model.joblib"),
             "metrics_path": str(artifacts_dir / "metrics.json"),
+            "benchmark_metrics_path": str(artifacts_dir / "benchmark_metrics.json"),
             "X_train_path": str(artifacts_dir / "X_train.csv"),
             "X_test_path": str(artifacts_dir / "X_test.csv"),
             "y_train_path": str(artifacts_dir / "y_train.csv"),
@@ -124,5 +125,28 @@ def test_params():
             "request_timeout_seconds": 30,
             "max_rows": None,
             "max_unique_requests": None,
+            "chunk_size": 250,
+        },
+        "benchmark": {
+            "models": {
+                "logistic_regression": {
+                    "enabled": True,
+                    "max_iter": 1000,
+                },
+                "random_forest": {
+                    "enabled": True,
+                    "n_estimators": 50,
+                    "max_depth": 6,
+                },
+                "xgboost": {
+                    "enabled": True,
+                    "n_estimators": 50,
+                    "max_depth": 3,
+                    "learning_rate": 0.1,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "eval_metric": "logloss",
+                },
+            }
         },
     }

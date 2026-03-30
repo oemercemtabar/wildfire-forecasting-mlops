@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import joblib
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
@@ -10,6 +11,7 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
 )
+from xgboost import XGBClassifier
 
 from src.utils.common import save_json
 from src.utils.logger import get_logger
@@ -17,26 +19,11 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-def train_model(X_train, X_test, y_train, y_test, config: dict, params: dict):
-    model_cfg = params["model"]
-    model_name = model_cfg["name"]
-
-    if model_name != "logistic_regression":
-        raise ValueError(f"Unsupported model for now: {model_name}")
-
-    max_iter = int(model_cfg.get("max_iter", 1000))
-
-    logger.info("Training model: %s", model_name)
-
-    model = LogisticRegression(
-        max_iter=max_iter, random_state=params["split"]["random_state"]
-    )
-    model.fit(X_train, y_train)
-
+def _evaluate_model(model_name, model, X_test, y_test):
     y_pred = model.predict(X_test)
     y_proba = model.predict_proba(X_test)[:, 1]
 
-    metrics = {
+    return {
         "model_name": model_name,
         "accuracy": float(accuracy_score(y_test, y_pred)),
         "precision": float(precision_score(y_test, y_pred, zero_division=0)),
@@ -48,22 +35,103 @@ def train_model(X_train, X_test, y_train, y_test, config: dict, params: dict):
         ),
     }
 
+
+def _build_models(params: dict):
+    benchmark_cfg = params["benchmark"]
+    random_state = params["split"]["random_state"]
+
+    models = {}
+
+    lr_cfg = benchmark_cfg["models"]["logistic_regression"]
+    if lr_cfg.get("enabled", False):
+        models["logistic_regression"] = LogisticRegression(
+            max_iter=int(lr_cfg.get("max_iter", 1000)),
+            random_state=random_state,
+        )
+
+    rf_cfg = benchmark_cfg["models"]["random_forest"]
+    if rf_cfg.get("enabled", False):
+        models["random_forest"] = RandomForestClassifier(
+            n_estimators=int(rf_cfg.get("n_estimators", 200)),
+            max_depth=rf_cfg.get("max_depth"),
+            random_state=random_state,
+            n_jobs=-1,
+        )
+
+    xgb_cfg = benchmark_cfg["models"]["xgboost"]
+    if xgb_cfg.get("enabled", False):
+        models["xgboost"] = XGBClassifier(
+            n_estimators=int(xgb_cfg.get("n_estimators", 200)),
+            max_depth=int(xgb_cfg.get("max_depth", 6)),
+            learning_rate=float(xgb_cfg.get("learning_rate", 0.1)),
+            subsample=float(xgb_cfg.get("subsample", 0.8)),
+            colsample_bytree=float(xgb_cfg.get("colsample_bytree", 0.8)),
+            eval_metric=xgb_cfg.get("eval_metric", "logloss"),
+            random_state=random_state,
+            use_label_encoder=False,
+        )
+
+    return models
+
+
+def train_model(X_train, X_test, y_train, y_test, config: dict, params: dict):
+    models = _build_models(params)
+
+    if not models:
+        raise ValueError("No benchmark models are enabled in params.yaml")
+
+    benchmark_results = {}
+    best_model_name = None
+    best_model = None
+    best_score = float("-inf")
+
+    for model_name, model in models.items():
+        logger.info("Training model: %s", model_name)
+        model.fit(X_train, y_train)
+
+        metrics = _evaluate_model(model_name, model, X_test, y_test)
+        benchmark_results[model_name] = metrics
+
+        logger.info(
+            "%s | accuracy=%.4f precision=%.4f recall=%.4f f1=%.4f roc_auc=%.4f",
+            model_name,
+            metrics["accuracy"],
+            metrics["precision"],
+            metrics["recall"],
+            metrics["f1"],
+            metrics["roc_auc"],
+        )
+
+        if metrics["roc_auc"] > best_score:
+            best_score = metrics["roc_auc"]
+            best_model_name = model_name
+            best_model = model
+
+    if best_model is None:
+        raise RuntimeError("Failed to select a best model during benchmarking.")
+
     model_path = Path(config["artifacts"]["model_path"])
     metrics_path = Path(config["artifacts"]["metrics_path"])
+    benchmark_metrics_path = Path(config["artifacts"]["benchmark_metrics_path"])
 
     model_path.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(model, model_path)
-    save_json(metrics, metrics_path)
 
-    logger.info("Model saved to %s", model_path)
-    logger.info("Metrics saved to %s", metrics_path)
-    logger.info(
-        "Evaluation metrics | accuracy=%.4f precision=%.4f recall=%.4f f1=%.4f roc_auc=%.4f",
-        metrics["accuracy"],
-        metrics["precision"],
-        metrics["recall"],
-        metrics["f1"],
-        metrics["roc_auc"],
-    )
+    best_metrics = benchmark_results[best_model_name]
+    best_metrics["selected_as_best_model"] = True
 
-    return model, metrics
+    benchmark_payload = {
+        "best_model_name": best_model_name,
+        "selection_metric": "roc_auc",
+        "models": benchmark_results,
+    }
+
+    joblib.dump(best_model, model_path)
+    save_json(best_metrics, metrics_path)
+    save_json(benchmark_payload, benchmark_metrics_path)
+
+    logger.info("Best model selected: %s", best_model_name)
+    logger.info("Best model saved to %s", model_path)
+    logger.info("Best-model metrics saved to %s", metrics_path)
+    logger.info("Benchmark metrics saved to %s", benchmark_metrics_path)
+
+    return best_model, benchmark_payload
