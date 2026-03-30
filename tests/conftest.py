@@ -88,6 +88,8 @@ def test_config(tmp_path: Path):
             "y_train_path": str(artifacts_dir / "y_train.csv"),
             "y_test_path": str(artifacts_dir / "y_test.csv"),
             "weather_cache_dir": str(artifacts_dir / "weather_cache"),
+            "weather_summary_path": str(artifacts_dir / "weather_enrichment_summary.json"),
+            "failed_weather_requests_path": str(artifacts_dir / "failed_weather_requests.csv"),
         },
     }
 
